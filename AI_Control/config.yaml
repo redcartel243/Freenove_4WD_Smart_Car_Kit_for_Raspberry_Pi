@@ -1,0 +1,39 @@
+# AI Robot Control Configuration
+
+robot:
+  ip: "192.168.0.105"  # Change to your Raspberry Pi IP
+  command_port: 5000
+  video_port: 8000
+
+vision:
+  yolo_model: "yolov8n.pt"  # nano model for speed, can use yolov8s.pt for better accuracy
+  confidence_threshold: 0.5
+  frame_skip: 2  # Process every Nth frame for performance
+
+llm:
+  provider: "ollama"  # ollama or openai
+  model: "qwen2.5:7b-instruct"  # Excellent tool calling
+  base_url: "http://localhost:11434"
+  temperature: 0.7
+  max_tokens: 1024
+
+  # For OpenAI-compatible APIs (optional)
+  # provider: "openai"
+  # model: "gpt-4"
+  # api_key: "your-api-key"
+  # base_url: "https://api.openai.com/v1"
+
+vision_llm:
+  # For when AI needs to directly "see" an image
+  provider: "ollama"
+  model: "moondream"  # Tiny vision model
+  base_url: "http://localhost:11434"
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+autonomous:
+  enabled: true
+  loop_interval: 0.5  # Seconds between AI decisions
+  emergency_stop_distance: 15  # cm - stop if obstacle closer than this
