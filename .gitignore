@@ -21,3 +21,4 @@ wheels/
 MANIFEST
 venv/
 env/
+.claude/settings.local.json
