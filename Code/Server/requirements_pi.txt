@@ -1,0 +1,17 @@
+# Requirements for Raspberry Pi (headless server)
+# Install with: pip3 install -r requirements_pi.txt
+
+# GPIO and hardware control
+gpiozero
+RPi.GPIO
+smbus2
+
+# Camera (Picamera2 should be installed via apt)
+# sudo apt install -y python3-picamera2
+
+# Image processing (for camera)
+Pillow
+numpy
+
+# Note: The following are installed via apt, not pip:
+# sudo apt install -y python3-picamera2 python3-libcamera
