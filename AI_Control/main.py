@@ -506,6 +506,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         while True:
+            # Request fresh sensor data from robot
+            if robot and robot.connected:
+                robot.request_distance()
+
+            await asyncio.sleep(0.3)  # Wait for response
+
             # Send status updates
             status = {
                 "type": "status",
@@ -516,7 +522,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "agent_state": agent.get_state() if agent else None
             }
             await websocket.send_json(status)
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.2)
 
     except WebSocketDisconnect:
         connected_websockets.remove(websocket)

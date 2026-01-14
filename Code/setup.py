@@ -109,9 +109,23 @@ def backup_file(file_path):
     except Exception as e:
         print(f"Error backing up {config_path}: {e}")
 
+def get_config_file_path():
+    """Find the correct config.txt path based on Pi OS version"""
+    import os
+    # Newer Pi OS (Bookworm+) uses /boot/firmware/config.txt
+    if os.path.exists('/boot/firmware/config.txt'):
+        return '/boot/firmware/config.txt'
+    # Older Pi OS uses /boot/config.txt
+    elif os.path.exists('/boot/config.txt'):
+        return '/boot/config.txt'
+    else:
+        print("Warning: Could not find config.txt in /boot/firmware/ or /boot/")
+        return '/boot/firmware/config.txt'  # Default fallback
+
 def config_file():
     pi_version = get_raspberry_pi_version()
-    file_path = '/boot/firmware/config.txt'
+    file_path = get_config_file_path()
+    print(f"Using config file: {file_path}")
     backup_file(file_path)
     update_config_file(file_path, 'dtparam=spi', 'on')
     update_config_file(file_path, 'camera_auto_detect', '0')
