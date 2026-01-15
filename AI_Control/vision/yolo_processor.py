@@ -263,6 +263,23 @@ class YOLOProcessor:
 
         return False, None
 
+    def get_detections_raw(self) -> List[dict]:
+        """
+        Get detections in raw dict format for the autonomous system.
+        Returns list of dicts with class_name, confidence, box fields.
+        """
+        with self.lock:
+            detections = self.last_detections.copy()
+
+        return [
+            {
+                "class_name": det.label,
+                "confidence": det.confidence,
+                "box": list(det.bbox)  # [x1, y1, x2, y2]
+            }
+            for det in detections
+        ]
+
 
 # Simple test
 if __name__ == "__main__":

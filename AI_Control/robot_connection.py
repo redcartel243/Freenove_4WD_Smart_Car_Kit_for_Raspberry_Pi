@@ -359,7 +359,7 @@ class RobotConnection:
     def set_led_mode(self, mode: int):
         """
         Set LED animation mode.
-        0=off, 1=follow, 2=blink, 3=rainbow breathe, 4=rainbow cycle
+        0=off, 1=manual (required for set_led to work), 2=follow, 3=blink, 4=rainbow breathe, 5=rainbow cycle
         """
         cmd = f"{self.CMD_LED_MOD}#{mode}\n"
         self._send_command(cmd)
