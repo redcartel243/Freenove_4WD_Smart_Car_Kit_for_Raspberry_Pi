@@ -283,9 +283,13 @@ class HeadlessServer:
 
     def video_send_loop(self):
         """Thread: Send video frames to client"""
+        print("Video send loop started")
+        frame_count = 0
         while self.running:
             try:
-                if self.tcp_server.is_video_server_connected():
+                connected = self.tcp_server.is_video_server_connected()
+                if connected:
+                    print(f"Video client connected, starting stream...")
                     self.camera.start_stream()
                     while self.tcp_server.is_video_server_connected() and self.running:
                         frame = self.camera.get_frame()
@@ -294,8 +298,13 @@ class HeadlessServer:
                         try:
                             self.tcp_server.send_data_to_video_client(lengthBin)
                             self.tcp_server.send_data_to_video_client(frame)
-                        except:
+                            frame_count += 1
+                            if frame_count % 30 == 1:
+                                print(f"Sent frame {frame_count}, size={lenFrame}")
+                        except Exception as e:
+                            print(f"Send error: {e}")
                             break
+                    print("Video client disconnected, stopping stream")
                     self.camera.stop_stream()
                 else:
                     time.sleep(0.1)

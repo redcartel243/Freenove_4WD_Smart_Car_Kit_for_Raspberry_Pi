@@ -192,12 +192,14 @@ class RobotConnection:
     def _video_loop(self):
         """Background thread to receive video frames"""
         connection = self.video_socket.makefile('rb')
+        frame_count = 0
 
         while not self._stop_event.is_set() and self.video_streaming:
             try:
                 # Read 4-byte length header
                 header = connection.read(4)
                 if len(header) < 4:
+                    print(f"Video: incomplete header ({len(header)} bytes)")
                     continue
 
                 length = struct.unpack('<L', header)[0]
@@ -205,6 +207,7 @@ class RobotConnection:
                 # Read JPEG data
                 jpg_data = connection.read(length)
                 if len(jpg_data) < length:
+                    print(f"Video: incomplete frame ({len(jpg_data)}/{length} bytes)")
                     continue
 
                 # Decode frame
@@ -214,6 +217,10 @@ class RobotConnection:
                 )
 
                 if frame is not None:
+                    frame_count += 1
+                    if frame_count % 30 == 1:  # Log every 30 frames
+                        print(f"Video: received frame {frame_count}, shape={frame.shape}")
+
                     with self.frame_lock:
                         self.current_frame = frame
 

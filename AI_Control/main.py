@@ -484,12 +484,25 @@ async def video_feed():
     """MJPEG video stream"""
     def generate():
         while True:
+            frame = None
+
+            # Try to get YOLO annotated frame first
             if yolo:
                 frame = yolo.get_annotated_frame()
-                if frame is not None:
-                    _, buffer = cv2.imencode('.jpg', frame)
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+            # Fallback to raw robot frame if YOLO has no frame
+            if frame is None and robot and robot.connected:
+                frame = robot.get_frame()
+
+            if frame is not None:
+                _, buffer = cv2.imencode('.jpg', frame)
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+            else:
+                # No frame available, wait a bit
+                time.sleep(0.1)
+                continue
+
             time.sleep(0.033)
 
     return StreamingResponse(
