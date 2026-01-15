@@ -68,34 +68,47 @@ class RobotConnection:
     def connect(self) -> bool:
         """Connect to the robot's command and video servers"""
         try:
+            print(f"Connecting to robot at {self.ip}...")
+
             # Connect command socket
+            print(f"  Connecting command socket to port {self.command_port}...")
             self.command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.command_socket.settimeout(5)
             self.command_socket.connect((self.ip, self.command_port))
             self.command_socket.settimeout(None)
+            print(f"  Command socket connected!")
 
             # Connect video socket
+            print(f"  Connecting video socket to port {self.video_port}...")
             self.video_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.video_socket.settimeout(5)
             self.video_socket.connect((self.ip, self.video_port))
             self.video_socket.settimeout(None)
+            print(f"  Video socket connected!")
 
             self.connected = True
             self._stop_event.clear()
+            self.video_streaming = True  # Set this BEFORE starting video thread
 
             # Start receiver threads
             self._recv_thread = threading.Thread(target=self._receive_loop, daemon=True)
             self._recv_thread.start()
+            print("Command receive thread started")
 
             self._video_thread = threading.Thread(target=self._video_loop, daemon=True)
             self._video_thread.start()
+            print("Video receive thread started")
 
-            self.video_streaming = True
+            # Give the video thread a moment to initialize
+            time.sleep(0.1)
+
             print(f"Connected to robot at {self.ip}")
             return True
 
         except Exception as e:
             print(f"Failed to connect to robot: {e}")
+            import traceback
+            traceback.print_exc()
             self.disconnect()
             return False
 
@@ -191,18 +204,44 @@ class RobotConnection:
 
     def _video_loop(self):
         """Background thread to receive video frames"""
-        connection = self.video_socket.makefile('rb')
+        print("Video loop: thread started")
+        print(f"Video loop: socket={self.video_socket}, streaming={self.video_streaming}")
+
+        if self.video_socket is None:
+            print("Video loop: ERROR - video_socket is None!")
+            return
+
+        try:
+            # Set socket to blocking mode for reliable reads
+            self.video_socket.setblocking(True)
+            connection = self.video_socket.makefile('rb')
+            print("Video loop: socket file created successfully")
+        except Exception as e:
+            print(f"Video loop: failed to create socket file: {e}")
+            import traceback
+            traceback.print_exc()
+            return
+
         frame_count = 0
+        print("Video loop: entering main loop, waiting for frames...")
 
         while not self._stop_event.is_set() and self.video_streaming:
             try:
                 # Read 4-byte length header
                 header = connection.read(4)
+
+                if len(header) == 0:
+                    print("Video loop: connection closed (0 bytes read)")
+                    break
+
                 if len(header) < 4:
                     print(f"Video: incomplete header ({len(header)} bytes)")
                     continue
 
                 length = struct.unpack('<L', header)[0]
+
+                if frame_count == 0:
+                    print(f"Video loop: first frame header received! length={length}")
 
                 # Read JPEG data
                 jpg_data = connection.read(length)
@@ -230,7 +269,11 @@ class RobotConnection:
             except Exception as e:
                 if not self._stop_event.is_set():
                     print(f"Video error: {e}")
+                    import traceback
+                    traceback.print_exc()
                 break
+
+        print(f"Video loop: exited. Received {frame_count} frames total.")
 
     # ==================== Motor Control ====================
 

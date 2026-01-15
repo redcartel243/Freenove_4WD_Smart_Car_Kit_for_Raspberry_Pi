@@ -93,15 +93,19 @@ class TCPServer:
         # Send a byte to the stop pipe to signal the server to stop
         self.stop_pipe_w.send(b'\x00')
 
-    def send_to_all_client(self, message):
+    def send_to_all_client(self, message, blocking=False):
         # Send a message to all connected clients
         for client_socket in list(self.client_sockets.keys()):
             try:
+                if blocking:
+                    client_socket.setblocking(1)
                 if isinstance(message, str):
                     encoded_message = message.encode('utf-8')
                 else:
                     encoded_message = message
                 client_socket.sendall(encoded_message)
+                if blocking:
+                    client_socket.setblocking(0)
             except socket.error as e:
                 print(f"Error sending data to {self.client_sockets[client_socket]}: {e}")
                 self.remove_client(client_socket)

@@ -78,7 +78,8 @@ class Server:
             if ip_address is not None:
                 self.video_server.send_to_client(ip_address, data)  # Send data to a specific client
             else:
-                self.video_server.send_to_all_client(data)         # Send data to all connected clients of the video server
+                # Use blocking mode for video to avoid EAGAIN errors
+                self.video_server.send_to_all_client(data, blocking=True)
         finally:
             self.set_video_server_busy(False)
 

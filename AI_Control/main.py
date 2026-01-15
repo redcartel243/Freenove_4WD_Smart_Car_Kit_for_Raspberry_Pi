@@ -294,6 +294,7 @@ def frame_processor():
     """Background thread that processes frames with YOLO"""
     frame_skip = config.get("vision", {}).get("frame_skip", 2)
     frame_count = 0
+    last_log = time.time()
 
     while True:
         if robot and robot.connected and yolo:
@@ -302,6 +303,13 @@ def frame_processor():
                 frame_count += 1
                 if frame_count % frame_skip == 0:
                     yolo.process_frame(frame)
+                # Log every 5 seconds
+                if time.time() - last_log > 5:
+                    print(f"Frame processor: processed {frame_count} frames")
+                    last_log = time.time()
+            elif time.time() - last_log > 5:
+                print("Frame processor: no frames available from robot")
+                last_log = time.time()
         time.sleep(0.033)  # ~30 FPS max
 
 
